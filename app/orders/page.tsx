@@ -12,10 +12,25 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    // TODO: intern — no loading/error handling here yet
-    void fetch('http://localhost:3000/orders')
-      .then((res) => res.json())
-      .then((data: Order[]) => setOrders(data));
+    async function fetchorders() {
+      try{
+        const res = await fetch('http://localhost:3000/orders');
+        const data= await res.json();
+
+        if(Array.isArray(data)){
+           setOrders(data)
+        }
+        else{
+          console.error('API did not return an array. Received:', data);
+          setOrders([]);
+        }
+      }
+      catch(error){
+        console.error(`Fetch error : ${error}`);
+        setOrders([]);
+      }  
+    }
+    fetchorders();
   }, []);
 
   return (
