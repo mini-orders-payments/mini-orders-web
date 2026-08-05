@@ -6,6 +6,7 @@ import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { StatusBadge } from "@/components/statusBadge";
 import { type Order } from "@/types/orders";
+import { toast } from "sonner";
 
 export default function DeleteOrderPage() {
   
@@ -49,9 +50,11 @@ export default function DeleteOrderPage() {
 
     setDeleted(found.id);
     setFound(null);
+    toast.success(`Order ${found.id} deleted permanently.`);
     }
     catch (error) {
     console.error("Deletion pipeline failed:", error);
+    toast.error(`Failed to delete order ${orderNumber}`)
     }
     
   }

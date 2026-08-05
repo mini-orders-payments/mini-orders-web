@@ -6,6 +6,7 @@ import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { StatusBadge } from "@/components/statusBadge";
 import {  type Order } from "@/types/orders"
+import { toast } from "sonner";
 
 export default function PaymentPage() {
  
@@ -14,6 +15,8 @@ export default function PaymentPage() {
   const [found, setFound] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
+  const [phoneNumber,setPhoneNumber] =useState("");
+  const [processing,setProcessing] = useState(Boolean);
 
   async function handleLookup(e: FormEvent) {
     e.preventDefault();
@@ -27,6 +30,15 @@ export default function PaymentPage() {
       setFound(null);
       return;
     }
+
+    const cleanNumber=phoneNumber.trim()
+
+    if(cleanNumber.length !==12){
+
+      setError("Invalid Number. Must be in the format 2547XXXXXXXX.")
+      return;
+    }
+
     const match=data
     setError(null);
     setFound(match);
@@ -35,23 +47,44 @@ export default function PaymentPage() {
   async function handlePay() {
     if (!found) return;
 
+    setProcessing(true);
+    setError("");
+
     try {
-    const res = await fetch(`http://localhost:3000/orders/${found.id}/pay`, {
+      const res = await fetch(`http://localhost:3000/pay/${found.id}/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      body:JSON.stringify({phoneNumber:phoneNumber})
 
     });
+     if (!res.ok) throw new Error("Failed to send payment prompt");
+     
+     const data = await res.json();
+     console.log(data.msg);
 
-    if (!res.ok) throw new Error("Failed to delete order from backend server");
+    const pollInterval = setInterval(async () => {
+      try {
+        const orderCheck = await fetch(`http://localhost:3000/orders/${found.id}`);
+        const freshOrder = await orderCheck.json();
 
-    const data = await res.json();
-    console.log(data.msg);
-
-    setPaid(true);
-    setFound(null);
+      if (freshOrder.status === "completed") {
+        clearInterval(pollInterval);
+        setProcessing(false);
+        setPaid(true); // Update your state
+        toast.success("Payment Successful! Your order has been completed."); // 👈 Replaces alert
+      } 
+      else if (freshOrder.status === "failed") {
+        clearInterval(pollInterval);
+        setProcessing(false);
+        toast.error("Payment Failed. The transaction was cancelled or timed out."); // 👈 Replaces alert
+      }
+    } catch (err) {
+      console.error("Polling error:", err);
+    }
+     }, 1500);
     }
     catch (error) {
-    console.error("Deletion pipeline failed:", error);
+    console.error("Payment Error:", error);
     }
     
   }
@@ -79,7 +112,7 @@ export default function PaymentPage() {
     }, []);
 
   // Keep the displayed order in sync if it changes elsewhere (e.g. edited in View orders).
-  const liveOrder = found ? orders.find((o) => o.id === found.id) ?? null : null;
+  const liveOrder = found ? orders.find((o) => o.id === found.id && o.status !== "completed") ?? null : null;
 
   return (
     <div>
@@ -93,6 +126,16 @@ export default function PaymentPage() {
           onChange={(e) => setOrderNumber(e.target.value)}
           autoComplete="off"
         />
+
+        <Field
+        label="Enter phone number to pay from"
+        placeholder="254712345678"
+        value={phoneNumber}
+        onChange={(e) => { const digitsOnly = e.target.value.replace(/\D/g, ""); // Removes non-digits
+          setPhoneNumber(digitsOnly);}}
+        autoComplete="off"
+        />
+
         {error && (
           <p role="alert" className="rounded-md bg-rust-soft px-3 py-2 text-sm text-rust-ink">
             {error}

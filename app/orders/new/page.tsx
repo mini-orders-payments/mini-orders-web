@@ -6,6 +6,8 @@ import { CheckCircle2 } from "lucide-react";
 import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { type Order } from "@/types/orders";
+import { toast } from "sonner";
+
 
 export default function CreateOrderPage() {
   const [userId, setUserId] = useState("");
@@ -32,17 +34,18 @@ export default function CreateOrderPage() {
         const res = await fetch('http://localhost:3000/orders/',{
                 method:'POST',
                 headers:{"content-Type":"application/json"},
-                body:JSON.stringify({userId,amount,orderNumber}),
-        });
+                body:JSON.stringify({userId,amount,orderNumber}),});
                
             if (!res.ok) throw new Error('Failed to create order');
         
             const data = await res.json();
-            console.log('Order created:', data);
-       
+            setCreated(data)
+            toast.success(`Order ${data.orderNumber} created successfully!`);
             }
+
             catch (error) {
                console.error('Error:', error);
+               toast.error("Failed to create order.");
              }
         }
 
@@ -97,7 +100,7 @@ export default function CreateOrderPage() {
             <p className="font-semibold text-ink">Order created</p>
             <p className="mt-1">id: {created.id}</p>
             <p>order number: {created.orderNumber}</p>
-            <p>amount: {created.amount.toFixed(2)}</p>
+            <p>amount: {Number(created.amount).toFixed(2)}</p>
           </div>
         </div>
       )}

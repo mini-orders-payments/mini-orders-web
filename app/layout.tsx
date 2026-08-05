@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
+import { Toaster } from "sonner";
 
 
 const manrope = Manrope({
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${manrope.variable} ${plexMono.variable} antialiased`}>
+        <Toaster richColors position="top-center" />
        
           <div className="flex min-h-screen flex-col md:flex-row">
             <Nav />

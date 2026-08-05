@@ -5,6 +5,7 @@ import { X, Trash2 } from "lucide-react";
 import { Field } from "./field";
 import { Button } from "./button";
 import type { Order } from  "../types/orders"
+import { toast } from "sonner";
 
 type Props = {
   order: Order;
@@ -33,9 +34,11 @@ export function EditOrderModal({ order, onClose, }: Props) {
 
     const data = await res.json();
     console.log(data.msg);
+    toast.success(`Order ${order.id} deleted permanently.`);
     }
     catch (error) {
     console.error("Deletion pipeline failed:", error);
+    toast.error(`Failed to delete order ${order.id}`)
     }
     
   }
@@ -50,10 +53,11 @@ export function EditOrderModal({ order, onClose, }: Props) {
             headers: { "Content-Type": "application/json" },
             body:JSON.stringify({amount: parsed})
         });
-
+    toast.success(`Order ${order.id} updated successfully`)
     }
     catch(error){
         console.log(error)
+        toast.error("Failed to update order amount")
     }
   }
 
