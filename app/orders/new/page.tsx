@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent ,useEffect} from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { Field } from "@/components/field";
@@ -11,7 +11,6 @@ import { toast } from "sonner";
 
 export default function CreateOrderPage() {
   const [userId, setUserId] = useState("");
-  const [orderNumber, setOrderNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Order | null>(null);
@@ -20,8 +19,8 @@ export default function CreateOrderPage() {
     e.preventDefault();
     setError(null);
 
-    if (!userId.trim() || !orderNumber.trim() || !amount.trim()) {
-      setError("User id, order id, and amount are all required.");
+    if (!userId.trim() || !amount.trim()) {
+      setError("User id, and amount are all required.");
       return;
     }
     const parsedAmount = Number(amount);
@@ -34,13 +33,13 @@ export default function CreateOrderPage() {
         const res = await fetch('http://localhost:3000/orders/',{
                 method:'POST',
                 headers:{"content-Type":"application/json"},
-                body:JSON.stringify({userId,amount,orderNumber}),});
+                body:JSON.stringify({userId,amount})});
                
             if (!res.ok) throw new Error('Failed to create order');
         
             const data = await res.json();
             setCreated(data)
-            toast.success(`Order ${data.orderNumber} created successfully!`);
+            toast.success(`Order created successfully!`);
             }
 
             catch (error) {
@@ -64,13 +63,7 @@ export default function CreateOrderPage() {
           onChange={(e) => setUserId(e.target.value)}
           autoComplete="off"
         />
-        <Field
-          label="Order id"
-          placeholder="1004"
-          value={orderNumber}
-          onChange={(e) => setOrderNumber(e.target.value)}
-          autoComplete="off"
-        />
+        
         <Field
           label="Amount"
           placeholder="70.00"
@@ -99,7 +92,6 @@ export default function CreateOrderPage() {
           <div className="ledger-mono text-sm text-ink-soft">
             <p className="font-semibold text-ink">Order created</p>
             <p className="mt-1">id: {created.id}</p>
-            <p>order number: {created.orderNumber}</p>
             <p>amount: {Number(created.amount).toFixed(2)}</p>
           </div>
         </div>

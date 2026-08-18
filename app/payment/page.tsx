@@ -16,7 +16,7 @@ export default function PaymentPage() {
   const [error, setError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
   const [phoneNumber,setPhoneNumber] =useState("");
-  const [processing,setProcessing] = useState(Boolean);
+  const [processing,setProcessing] = useState(false);
 
   async function handleLookup(e: FormEvent) {
     e.preventDefault();
@@ -51,7 +51,7 @@ export default function PaymentPage() {
     setError("");
 
     try {
-      const res = await fetch(`http://localhost:3000/pay/${found.id}/`, {
+      const res = await fetch(`http://localhost:3000/pay/${found.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body:JSON.stringify({phoneNumber:phoneNumber})
@@ -60,10 +60,16 @@ export default function PaymentPage() {
      if (!res.ok) throw new Error("Failed to send payment prompt");
      
      const data = await res.json();
-     console.log(data.msg);
+     console.log(data.paymentdata);
+
+     toast.info("STK Push sent! Please check your phone to enter your M-Pesa PIN.");
+
+    let pollCount = 0;
+    const maxPolls = 40; 
 
     const pollInterval = setInterval(async () => {
       try {
+        pollCount++;
         const orderCheck = await fetch(`http://localhost:3000/orders/${found.id}`);
         const freshOrder = await orderCheck.json();
 
@@ -78,10 +84,17 @@ export default function PaymentPage() {
         setProcessing(false);
         toast.error("Payment Failed. The transaction was cancelled or timed out."); // 👈 Replaces alert
       }
+      else if (pollCount >= maxPolls) {
+            // Break the infinite loop if Daraja never calls back
+            clearInterval(pollInterval);
+            setProcessing(false);
+            toast.warning("Payment timed out. Please refresh to check status later.");
+          }
     } catch (err) {
       console.error("Polling error:", err);
     }
      }, 1500);
+     
     }
     catch (error) {
     console.error("Payment Error:", error);
@@ -159,10 +172,7 @@ export default function PaymentPage() {
                 <dt className="text-ink-soft">User</dt>
                 <dd className="ledger-mono text-ink">{liveOrder.userId}</dd>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-ink-soft">Order number</dt>
-                <dd className="ledger-mono text-ink">{liveOrder.orderNumber}</dd>
-              </div>
+              
               <div className="flex justify-between">
                 <dt className="text-ink-soft">Amount due</dt>
                 <dd className="ledger-mono font-semibold text-ink">Kshs {Number(liveOrder.amount).toFixed(2)}</dd>
@@ -176,8 +186,8 @@ export default function PaymentPage() {
               Payment recorded
             </div>
           ) : (
-            <Button className="mt-4 w-full" onClick={handlePay}>
-              Pay Kshs {Number(liveOrder.amount).toFixed(2)}
+            <Button className="mt-4 w-full" onClick={handlePay} disabled={processing}>
+              {processing ? "Processing ..." : `Pay Kshs ${Number(liveOrder.amount).toFixed(2)}`}
             </Button>
           )}
         </div>
