@@ -7,6 +7,7 @@ import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { type Order } from "@/types/orders";
 import { toast } from "sonner";
+import { getCurrentUser } from "@/lib/auth-actions";
 
 
 export default function CreateOrderPage() {
@@ -15,11 +16,27 @@ export default function CreateOrderPage() {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Order | null>(null);
 
+
+  
+async function getUser(){
+  
+}
+
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!userId.trim() || !amount.trim()) {
+    const profile =await getCurrentUser()
+
+    const id=profile?.id
+
+    if (!id || isNaN(Number(id))){
+      setError("A valid User ID is required.");
+    return;
+    }
+
+    if (!id || !amount.trim()) {
       setError("User id, and amount are all required.");
       return;
     }
@@ -33,7 +50,7 @@ export default function CreateOrderPage() {
         const res = await fetch('http://localhost:3000/orders/',{
                 method:'POST',
                 headers:{"content-Type":"application/json"},
-                body:JSON.stringify({userId,amount})});
+                body:JSON.stringify({userId:Number(id),amount})});
                
             if (!res.ok) throw new Error('Failed to create order');
         
@@ -53,16 +70,12 @@ export default function CreateOrderPage() {
 
   return (
     <div>
-      <h1 className="ledger-heading text-2xl font-bold text-ink">Create order</h1>
 
+      <h1 className="ledger-heading text-2xl font-bold text-ink">Create order</h1>
+      
+      
       <form onSubmit={handleSubmit} className="mt-8 flex max-w-sm flex-col gap-5" noValidate>
-        <Field
-          label="User id"
-          placeholder="204"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          autoComplete="off"
-        />
+        
         
         <Field
           label="Amount"

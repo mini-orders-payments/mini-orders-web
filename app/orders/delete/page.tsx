@@ -23,7 +23,7 @@ export default function DeleteOrderPage() {
     const data=await res.json();
 
 
-    if (data.statusCode==404) {
+    if (data.statusCode === 404) {
       setError("No order found with that id.");
       setFound(null);
       return;

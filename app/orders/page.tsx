@@ -2,6 +2,7 @@
 
 import { useState,useEffect } from "react";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth-actions";
 import { Pencil, PackageOpen } from "lucide-react";
 import { type Order } from "@/types/orders"
 import { StatusBadge } from "@/components/statusBadge";
@@ -14,6 +15,7 @@ function formatDate(iso: string) {
     timeStyle: "short",
   });
 }
+
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -42,8 +44,11 @@ export default function OrdersPage() {
 
   useEffect(() => {
     async function fetchorders() {
+
+      const profile = await getCurrentUser();
+      const id=profile.id
       try{
-        const res = await fetch('http://localhost:3000/orders');
+        const res = await fetch(`http://localhost:3000/orders/user/${id}`);
         const data= await res.json();
 
         if(Array.isArray(data)){
@@ -59,6 +64,7 @@ export default function OrdersPage() {
         setOrders([]);
       }  
     }
+    
     fetchorders();
   }, []);
 

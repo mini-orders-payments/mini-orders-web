@@ -1,47 +1,49 @@
 "use client";
 
 import { useState, type FormEvent,useEffect } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Phone } from "lucide-react";
 import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { StatusBadge } from "@/components/statusBadge";
 import {  type Order } from "@/types/orders"
 import { toast } from "sonner";
+import { getCurrentUser } from "@/lib/auth-actions";
 
 export default function PaymentPage() {
  
   const [orders,setOrders ] =useState<Order[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
+  const [profile,setprofile]=useState<any>(null);
   const [found, setFound] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
   const [phoneNumber,setPhoneNumber] =useState("");
   const [processing,setProcessing] = useState(false);
+  
 
   async function handleLookup(e: FormEvent) {
     e.preventDefault();
-    const res = await fetch(`http://localhost:3000/orders/${orderNumber}`);
 
-    const data=await res.json();
+    
+   const match=orders.find((o)=>o.id === Number(orderNumber));
 
-
-    if (data.statusCode==404) {
-      setError("No order found with that id.");
+   if (!match) {
+      setError("No order found with that ID ");
       setFound(null);
       return;
     }
 
     const cleanNumber=phoneNumber.trim()
 
-    if(cleanNumber.length !==12){
+    if(cleanNumber.length !== 12){
 
       setError("Invalid Number. Must be in the format 2547XXXXXXXX.")
       return;
     }
 
-    const match=data
+    
     setError(null);
-    setFound(match);
+    setFound(match!);
   }
 
   async function handlePay() {
@@ -57,10 +59,14 @@ export default function PaymentPage() {
       body:JSON.stringify({phoneNumber:phoneNumber})
 
     });
-     if (!res.ok) throw new Error("Failed to send payment prompt");
+     if (!res.ok){
+
+      const errorData = await res.json().catch(() => ({})); 
+        throw new Error(errorData.message || "Failed to connect to the payment gateway.");
+     } 
      
      const data = await res.json();
-     console.log(data.paymentdata);
+     
 
      toast.info("STK Push sent! Please check your phone to enter your M-Pesa PIN.");
 
@@ -68,61 +74,82 @@ export default function PaymentPage() {
     const maxPolls = 40; 
 
     const pollInterval = setInterval(async () => {
+      pollCount++;
+
+      if (pollCount >= maxPolls) {
+            clearInterval(pollInterval);
+            setProcessing(false);
+            toast.warning("Payment timed out. Please refresh to check status later.");
+            return;
+          }
+
       try {
-        pollCount++;
         const orderCheck = await fetch(`http://localhost:3000/orders/${found.id}`);
         const freshOrder = await orderCheck.json();
 
       if (freshOrder.status === "completed") {
         clearInterval(pollInterval);
         setProcessing(false);
-        setPaid(true); // Update your state
-        toast.success("Payment Successful! Your order has been completed."); // 👈 Replaces alert
+        setPaid(true); // Update state
+        toast.success("Payment Successful! Your order has been completed."); 
       } 
       else if (freshOrder.status === "failed") {
         clearInterval(pollInterval);
         setProcessing(false);
-        toast.error("Payment Failed. The transaction was cancelled or timed out."); // 👈 Replaces alert
+        toast.error("Payment Failed. The transaction was cancelled "); 
       }
-      else if (pollCount >= maxPolls) {
-            // Break the infinite loop if Daraja never calls back
-            clearInterval(pollInterval);
-            setProcessing(false);
-            toast.warning("Payment timed out. Please refresh to check status later.");
-          }
+    
     } catch (err) {
       console.error("Polling error:", err);
     }
      }, 1500);
      
     }
-    catch (error) {
+    catch (error:any) {
     console.error("Payment Error:", error);
+     setProcessing(false);
+    toast.error(error.message || "An unexpected error occurred.");
     }
     
   }
 
   useEffect(() => {
-      async function fetchorders() {
-        try{
-          const res = await fetch('http://localhost:3000/orders');
-          const data= await res.json();
-  
-          if(Array.isArray(data)){
-             setOrders(data)
-          }
-          else{
-            console.error('API did not return an array. Received:', data);
-            setOrders([]);
-          }
+    async function fetchUserData() {
+      try {
+        
+        const currentProfile = await getCurrentUser();
+        if (!currentProfile) return;
+        
+        setprofile(currentProfile);
+
+        //Format and set the phone number
+        const phone = currentProfile.phone;
+        const formattedPhone = phone.trim().replace("+", "");
+        if (formattedPhone.startsWith("0")) {
+          setPhoneNumber(`254${formattedPhone.substring(1)}`);
+        } else {
+          setPhoneNumber(formattedPhone);
         }
-        catch(error){
-          console.error(`Fetch error : ${error}`);
+        
+        
+        const res = await fetch(`http://localhost:3000/orders/user/${currentProfile.id}`);
+        const data = await res.json();
+  
+        if (Array.isArray(data)) {
+           setOrders(data);
+        } else {
+          console.error('API did not return an array. Received:', data);
           setOrders([]);
-        }  
+        }
+
+      } catch (error) {
+        console.error("Data load error:", error);
+        setOrders([]);
       }
-      fetchorders();
-    }, []);
+    }
+
+    fetchUserData();
+  }, []);
 
   // Keep the displayed order in sync if it changes elsewhere (e.g. edited in View orders).
   const liveOrder = found ? orders.find((o) => o.id === found.id && o.status !== "completed") ?? null : null;

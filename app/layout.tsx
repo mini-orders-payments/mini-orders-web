@@ -3,7 +3,7 @@ import { Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
 import { Toaster } from "sonner";
-
+import { getCurrentUser } from "@/lib/auth-actions";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -23,14 +23,17 @@ export const metadata: Metadata = {
   description: "Create, view, pay for, and delete orders.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+
+  const user = await getCurrentUser();
+
   return (
     <html lang="en">
       <body className={`${manrope.variable} ${plexMono.variable} antialiased`}>
         <Toaster richColors position="top-center" />
        
           <div className="flex min-h-screen flex-col md:flex-row">
-            <Nav />
+            <Nav user={user} />
             <main className="flex-1 px-4 py-8 sm:px-8 md:px-12 md:py-12">
               <div className="mx-auto w-full max-w-3xl">{children}</div>
             </main>
