@@ -2,6 +2,7 @@
 
 import { useState,useEffect } from "react";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth-actions";
 import { Pencil, PackageOpen } from "lucide-react";
 import { type Order } from "@/types/orders"
 import { StatusBadge } from "@/components/statusBadge";
@@ -15,26 +16,39 @@ function formatDate(iso: string) {
   });
 }
 
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [editing,setEditing] = useState<Order | null>(null);
 
   function handleSave(amount: number) {
     if (!editing) return;
-    //updateAmount(editing.id, amount);
+
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === editing.id ? { ...order, amount: amount } : order
+      )
+    );
     setEditing(null);
   }
 
   function handleDelete() {
     if (!editing) return;
-    //deleteOrder(editing.id);
+
+    setOrders((prevOrders) =>
+      prevOrders.filter((order) => order.id !== editing.id)
+    );
+    
     setEditing(null);
   }
 
   useEffect(() => {
     async function fetchorders() {
+
+      const profile = await getCurrentUser();
+      const id=profile.id
       try{
-        const res = await fetch('http://localhost:3000/orders');
+        const res = await fetch(`http://localhost:3000/orders/user/${id}`);
         const data= await res.json();
 
         if(Array.isArray(data)){
@@ -50,6 +64,7 @@ export default function OrdersPage() {
         setOrders([]);
       }  
     }
+    
     fetchorders();
   }, []);
 
@@ -84,7 +99,6 @@ export default function OrdersPage() {
                   <th className="px-4 py-3">Id</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Amount</th>
-                  <th className="px-4 py-3">Order number</th>
                   <th className="px-4 py-3">Created at</th>
                   <th className="px-4 py-3 text-right">Edit</th>
                 </tr>
@@ -97,7 +111,6 @@ export default function OrdersPage() {
                       <StatusBadge status={order.status} />
                     </td>
               <td className="ledger-mono px-4 py-3 text-ink">{Number(order.amount).toFixed(2)}</td>
-              <td className="ledger-mono px-4 py-3 text-ink-soft">{order.orderNumber}</td>
               <td className="px-4 py-3 text-ink-soft">{formatDate(order.createdAt)}</td>
               <td className="px-4 py-3 text-right">
                       <button
@@ -120,7 +133,7 @@ export default function OrdersPage() {
               <div className="flex items-start justify-between">
                  <div>
                     <p className="ledger-mono text-sm font-semibold text-ink">{order.id}</p>
-                    <p className="ledger-mono mt-0.5 text-xs text-ink-faint">{order.orderNumber}</p>
+                    
                   </div>
 
                   <button

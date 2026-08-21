@@ -13,7 +13,7 @@ export default function DeleteOrderPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const [found, setFound] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [deleted, setDeleted] = useState<string | null>(null);
+  const [deleted, setDeleted] = useState<number | null>(null);
 
   async function handleLookup(e: FormEvent) {
     e.preventDefault();
@@ -23,7 +23,7 @@ export default function DeleteOrderPage() {
     const data=await res.json();
 
 
-    if (data.statusCode==404) {
+    if (data.statusCode === 404) {
       setError("No order found with that id.");
       setFound(null);
       return;

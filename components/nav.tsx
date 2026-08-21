@@ -5,13 +5,16 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
+import { signOutAction } from "@/lib/auth-actions";
+import type { CurrentUser } from "@/lib/auth-actions";
+import { UserMenu } from "./userMenu";
 
 function isActive(pathname: string, href: string) {
   if (href === "/orders") return pathname === "/orders";
   return pathname === href;
 }
 
-export function Nav() {
+export function Nav({user}: {user:CurrentUser}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -20,6 +23,9 @@ export function Nav() {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-60 md:shrink-0 md:flex-col md:border-r md:border-line md:bg-surface md:px-5 md:py-8">
         <Wordmark />
+
+        {user?
+        (
         <nav className="mt-10 flex flex-col gap-1">
           {NAV_LINKS.map((link) => (
             <Link
@@ -39,27 +45,41 @@ export function Nav() {
               {link.label}
             </Link>
           ))}
-        </nav>
-        <div className="mt-auto pt-8 text-xs text-ink-faint">
-          <p className="ledger-mono">v1.0.0 — local store</p>
-        </div>
+        </nav>):(
+          <p className="mt-10 text-sm text-ink-faint">Sign in to get started.</p>
+        )}
+        
+        
+        <div className="mt-auto pt-8 text-l text-ink-faint">
+         {user ? (
+            <UserMenu user={user} /> 
+            
+          ) : (
+            <p className="ledger-mono text-xs text-ink-faint">Mini-orders store</p>
+          )}
+        </div> 
       </aside>
 
       {/* Mobile top bar */}
       <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-4 md:hidden">
         <Wordmark compact />
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-label={open ? "Close menu" : "Open menu"}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-line text-ink"
-        >
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
+         <div className="flex items-center gap-2">
+          {user && <UserMenu user={user} compact />}
+          {user && (
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-label={open ? "Close menu" : "Open menu"}
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-line text-ink"
+            >
+              {open ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          )}
+        </div>
       </header>
 
-      {open && (
+      {open && user && (
         <nav className="border-b border-line bg-surface px-4 pb-4 md:hidden">
           <div className="flex flex-col gap-1 pt-2">
             {NAV_LINKS.map((link) => (

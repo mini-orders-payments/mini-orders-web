@@ -1,27 +1,43 @@
 "use client";
 
-import { useState, type FormEvent ,useEffect} from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { type Order } from "@/types/orders";
 import { toast } from "sonner";
+import { getCurrentUser } from "@/lib/auth-actions";
 
 
 export default function CreateOrderPage() {
   const [userId, setUserId] = useState("");
-  const [orderNumber, setOrderNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Order | null>(null);
+
+
+  
+async function getUser(){
+  
+}
+
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!userId.trim() || !orderNumber.trim() || !amount.trim()) {
-      setError("User id, order id, and amount are all required.");
+    const profile =await getCurrentUser()
+
+    const id=profile?.id
+
+    if (!id || isNaN(Number(id))){
+      setError("A valid User ID is required.");
+    return;
+    }
+
+    if (!id || !amount.trim()) {
+      setError("User id, and amount are all required.");
       return;
     }
     const parsedAmount = Number(amount);
@@ -34,13 +50,13 @@ export default function CreateOrderPage() {
         const res = await fetch('http://localhost:3000/orders/',{
                 method:'POST',
                 headers:{"content-Type":"application/json"},
-                body:JSON.stringify({userId,amount,orderNumber}),});
+                body:JSON.stringify({userId:Number(id),amount})});
                
             if (!res.ok) throw new Error('Failed to create order');
         
             const data = await res.json();
             setCreated(data)
-            toast.success(`Order ${data.orderNumber} created successfully!`);
+            toast.success(`Order created successfully!`);
             }
 
             catch (error) {
@@ -54,23 +70,13 @@ export default function CreateOrderPage() {
 
   return (
     <div>
-      <h1 className="ledger-heading text-2xl font-bold text-ink">Create order</h1>
 
+      <h1 className="ledger-heading text-2xl font-bold text-ink">Create order</h1>
+      
+      
       <form onSubmit={handleSubmit} className="mt-8 flex max-w-sm flex-col gap-5" noValidate>
-        <Field
-          label="User id"
-          placeholder="204"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          autoComplete="off"
-        />
-        <Field
-          label="Order id"
-          placeholder="1004"
-          value={orderNumber}
-          onChange={(e) => setOrderNumber(e.target.value)}
-          autoComplete="off"
-        />
+        
+        
         <Field
           label="Amount"
           placeholder="70.00"
@@ -99,7 +105,6 @@ export default function CreateOrderPage() {
           <div className="ledger-mono text-sm text-ink-soft">
             <p className="font-semibold text-ink">Order created</p>
             <p className="mt-1">id: {created.id}</p>
-            <p>order number: {created.orderNumber}</p>
             <p>amount: {Number(created.amount).toFixed(2)}</p>
           </div>
         </div>
