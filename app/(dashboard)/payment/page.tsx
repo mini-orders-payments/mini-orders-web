@@ -174,7 +174,7 @@ export default function PaymentPage() {
             </option>
             {/* Filter out completed orders! */}
             {orders
-              .filter((o) => o.status !== "completed") 
+              .filter((o) => o.status === "pending") 
               .map((order) => (
                 <option key={order.id} value={order.id}>
                   Order {order.id} — Kshs {Number(order.amount).toFixed(2)}
