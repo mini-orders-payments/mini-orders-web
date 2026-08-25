@@ -49,7 +49,7 @@ export default function DeleteOrderPage() {
 
     const data=await res.json();
 
-    setOrders(data)
+    setOrders(Array.isArray(data) ? data : [])
   }fetchOrders();},
   []
 );
