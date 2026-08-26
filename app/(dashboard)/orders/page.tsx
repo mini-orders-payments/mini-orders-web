@@ -1,9 +1,9 @@
 'use client';
 
-import { useState,useEffect } from "react";
+import { useState,useEffect ,Fragment} from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth-actions";
-import { Pencil, PackageOpen } from "lucide-react";
+import { Pencil, PackageOpen,ChevronDown,ChevronUp } from "lucide-react";
 import { type Order } from "@/types/orders"
 import { StatusBadge } from "@/components/statusBadge";
 import { EditOrderModal } from "@/components/editOrder";
@@ -20,6 +20,8 @@ function formatDate(iso: string) {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [editing,setEditing] = useState<Order | null>(null);
+  const [expandedId,setExpandedId] = useState < Number | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<Record<number, any>>({});
 
   function handleSave(amount: number) {
     if (!editing) return;
@@ -41,6 +43,27 @@ export default function OrdersPage() {
     
     setEditing(null);
   }
+
+  async function toggleRow(orderId: number) {
+    if (expandedId === orderId) {
+      setExpandedId(null); 
+      return;
+    }
+    
+    setExpandedId(orderId); 
+
+    if (!paymentDetails[orderId]) {
+      try {
+        const res = await fetch(`http://localhost:3000/pay/order/${orderId}`);
+        const data = await res.json();
+
+        console.log(`Payment data for Order ${orderId}:`, data);
+        
+        setPaymentDetails((prev) => ({ ...prev, [orderId]: data }));
+      } catch (error) {
+        console.error("Failed to fetch payment details", error);
+      }
+    }}
 
   useEffect(() => {
     async function fetchorders() {
@@ -104,9 +127,22 @@ export default function OrdersPage() {
                 </tr>
               </thead>
         <tbody>
-          {orders.map((order) => (
-            <tr key={order.id} className="border-b border-line last:border-0 hover:bg-paper/60">
-              <td className="ledger-mono px-4 py-3 text-ink">{order.id}</td>
+          {orders.map((order) => {
+
+            const payment = paymentDetails[order.id];
+
+            return(
+            <Fragment key={order.id}>
+              
+
+            <tr onClick={()=> toggleRow(order.id)}
+              className=" cursor-pointer border-b border-line last:border-0 hover:bg-paper/60 transition-colors">
+
+              <td className="ledger-mono px-4 py-3 text-ink flex items-center gap-2">
+                {expandedId===order.id ? <ChevronUp size={16} className="text-ink-faint"/> : <ChevronDown size={16} className="text-ink-faint"/>}
+                {order.id}
+                </td>
+
               <td className="px-4 py-3">
                       <StatusBadge status={order.status} />
                     </td>
@@ -115,7 +151,9 @@ export default function OrdersPage() {
               <td className="px-4 py-3 text-right">
                       <button
                         type="button"
-                        onClick={() => setEditing(order)}
+                        onClick={(e) =>{
+                           e.stopPropagation();
+                           setEditing(order)}}
                         aria-label={`Edit order ${order.id}`}
                         className="rounded-md p-2 text-ink-faint hover:bg-accent-soft hover:text-accent-ink"
                       >
@@ -123,22 +161,49 @@ export default function OrdersPage() {
                       </button>
                 </td>
             </tr>
-          ))}
+            {expandedId===order.id &&(
+             <tr className="border-b border-line bg-paper/30">
+                        <td colSpan={5} className="px-4 py-4 px-10">
+                          <div className="grid grid-cols-2 gap-4 text-sm text-ink-soft">
+                            <div>
+                              <p className="font-semibold text-ink text-xs uppercase tracking-wider mb-1">M-Pesa Receipt</p>
+                             
+                              <p className="ledger-mono">{payment?.paymentCode || "Awaiting payment"}</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-ink text-xs uppercase tracking-wider mb-1">Transaction Result</p>
+                              <p>{payment?.resultDesc || "Pending Safaricom confirmation"}</p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+            );
+  })}
         </tbody>
       </table>
       </div>
       <ul className="mt-8 flex flex-col gap-3 sm:hidden">
-         {orders.map((order) => (
+         {orders.map((order) => {
+            const payment =paymentDetails[order.id];
+            return(
+         
            <li key={order.id} className="rounded-lg border border-line bg-surface p-4">
+              <div 
+                  className="cursor-pointer"
+                  onClick={() => toggleRow(order.id)}
+                >
               <div className="flex items-start justify-between">
                  <div>
                     <p className="ledger-mono text-sm font-semibold text-ink">{order.id}</p>
+                    {expandedId === order.id ? <ChevronUp size={16} className="text-ink-faint" /> : <ChevronDown size={16} className="text-ink-faint" />}
                     
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setEditing(order)}
+                    onClick={(e) =>{e.stopPropagation(); setEditing(order)} }
                     aria-label={`Edit order ${order.id}`}
                     className="rounded-md p-2 text-ink-faint hover:bg-accent-soft hover:text-accent-ink" >
 
@@ -152,8 +217,21 @@ export default function OrdersPage() {
                         </span>
                       </div>
                       <p className="mt-2 text-xs text-ink-faint">{formatDate(order.createdAt)}</p>
+                      </div>
+                      {expandedId === order.id && (
+                  <div className="mt-4 border-t border-line pt-4 flex flex-col gap-3 text-sm text-ink-soft">
+                    <div>
+                      <p className="font-semibold text-ink text-xs uppercase tracking-wider mb-1">M-Pesa Receipt</p>
+                      <p className="ledger-mono">{payment?.paymentCode || "Awaiting payment"}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-ink text-xs uppercase tracking-wider mb-1">Transaction Result</p>
+                      <p>{payment?.resultDesc || "Pending Safaricom confirmation"}</p>
+                    </div>
+                  </div>
+                )}
                     </li>
-                  ))}
+            )})}
                 </ul>
               </>
           )}
@@ -170,4 +248,4 @@ export default function OrdersPage() {
     
 
   );
-}
+  }

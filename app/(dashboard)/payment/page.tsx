@@ -19,6 +19,9 @@ export default function PaymentPage() {
   const [paid, setPaid] = useState(false);
   const [phoneNumber,setPhoneNumber] =useState("");
   const [processing,setProcessing] = useState(false);
+  const backend =process.env.NEST_API_URL
+
+  console.log("Here is ",backend)
   
 
   async function handleLookup(e: FormEvent) {
