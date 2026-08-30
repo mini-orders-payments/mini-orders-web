@@ -19,6 +19,9 @@ export default function PaymentPage() {
   const [paid, setPaid] = useState(false);
   const [phoneNumber,setPhoneNumber] =useState("");
   const [processing,setProcessing] = useState(false);
+  const backend =process.env.NEST_API_URL
+
+  console.log("Here is ",backend)
   
 
   async function handleLookup(e: FormEvent) {
@@ -159,13 +162,29 @@ export default function PaymentPage() {
       <h1 className="ledger-heading text-2xl font-bold text-ink">Payment</h1>
 
       <form onSubmit={handleLookup} className="mt-8 flex max-w-sm flex-col gap-5">
-        <Field
-          label="Order id to pay for"
-          placeholder="ord_1002"
-          value={orderNumber}
-          onChange={(e) => setOrderNumber(e.target.value)}
-          autoComplete="off"
-        />
+       <div className="flex flex-col gap-1.5">
+          <label htmlFor="orderSelect" className="text-sm font-medium text-ink">
+            Select an order to pay for
+          </label>
+          <select
+            id="orderSelect"
+            value={orderNumber}
+            onChange={(e) => setOrderNumber(e.target.value)}
+            className="h-10 rounded-md border border-line bg-transparent px-3 text-sm text-ink outline-none transition-colors focus:border-ink"
+          >
+            <option value="" disabled>
+              -- Choose a pending order --
+            </option>
+            {/* Filter out completed orders! */}
+            {orders
+              .filter((o) => o.status === "pending") 
+              .map((order) => (
+                <option key={order.id} value={order.id}>
+                  Order {order.id} — Kshs {Number(order.amount).toFixed(2)}
+                </option>
+              ))}
+          </select>
+        </div>
 
         <Field
         label="Enter phone number to pay from"
@@ -181,7 +200,7 @@ export default function PaymentPage() {
             {error}
           </p>
         )}
-        <Button type="submit" variant="outline" className="self-start">
+        <Button type="submit" variant="outline" className="self-start" disabled={!orderNumber}>
           Look up order
         </Button>
       </form>

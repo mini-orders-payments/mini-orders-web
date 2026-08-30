@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent ,useEffect} from "react";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { StatusBadge } from "@/components/statusBadge";
 import { type Order } from "@/types/orders";
 import { toast } from "sonner";
+import { getCurrentUser } from "@/lib/auth-actions";
 
 export default function DeleteOrderPage() {
   
@@ -14,6 +15,9 @@ export default function DeleteOrderPage() {
   const [found, setFound] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleted, setDeleted] = useState<number | null>(null);
+  const [orders,setOrders]=useState<Order[]>([]);
+
+
 
   async function handleLookup(e: FormEvent) {
     e.preventDefault();
@@ -32,6 +36,23 @@ export default function DeleteOrderPage() {
     setError(null);
     setFound(match);
   }
+
+  useEffect(()=>{
+  
+  async function fetchOrders() {
+    setDeleted(null);
+
+    const profile = await getCurrentUser()
+    const id=profile.id
+
+    const res = await fetch(`http://localhost:3000/orders/user/${id}`);
+
+    const data=await res.json();
+
+    setOrders(Array.isArray(data) ? data : [])
+  }fetchOrders();},
+  []
+);
 
   async function handleDelete() {
 
@@ -64,13 +85,28 @@ export default function DeleteOrderPage() {
       <h1 className="ledger-heading text-2xl font-bold text-ink">Delete order</h1>
 
       <form onSubmit={handleLookup} className="mt-8 flex max-w-sm flex-col gap-5">
-        <Field
-          label="Order id to delete"
-          placeholder="1003"
-          value={orderNumber}
-          onChange={(e) => setOrderNumber(e.target.value)}
-          autoComplete="off"
-        />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="deleteSelect" className="text-sm font-medium text-ink">
+            Select an order to delete
+          </label>
+          <select
+            id="deleteSelect"
+            value={orderNumber}
+            onChange={(e) => setOrderNumber(e.target.value)}
+            className="h-10 rounded-md border border-line bg-transparent px-3 text-sm text-ink outline-none transition-colors focus:border-ink"
+          >
+            <option value="" disabled>
+              -- Select an order --
+            </option>
+            {/* Maps over all of their fetched orders */}
+            {orders.map((order) => (
+                <option key={order.id} value={order.id}>
+                  Order {order.id} ({order.status}) — Kshs {Number(order.amount).toFixed(2)}
+                </option>
+              ))}
+          </select>
+        </div>
+        
         {error && (
           <p role="alert" className="rounded-md bg-rust-soft px-3 py-2 text-sm text-rust-ink">
             {error}

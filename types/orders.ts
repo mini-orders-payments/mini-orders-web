@@ -3,7 +3,7 @@
 export type OrderStatus = "pending" | "completed" | "failed";
 
 export type Order = {
-  id: string;
+  id: number;
   orderNumber: string;
   userId:number;
   amount: number;
