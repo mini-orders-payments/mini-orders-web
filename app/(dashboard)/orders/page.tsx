@@ -55,11 +55,16 @@ export default function OrdersPage() {
     if (!paymentDetails[orderId]) {
       try {
         const res = await fetch(`http://localhost:3000/pay/order/${orderId}`);
-        const data = await res.json();
+        if (!res.ok) return;
 
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : null;
+        
+        if (data){
         console.log(`Payment data for Order ${orderId}:`, data);
         
         setPaymentDetails((prev) => ({ ...prev, [orderId]: data }));
+        }
       } catch (error) {
         console.error("Failed to fetch payment details", error);
       }
