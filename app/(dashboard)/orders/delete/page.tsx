@@ -7,7 +7,8 @@ import { Button } from "@/components/button";
 import { StatusBadge } from "@/components/statusBadge";
 import { type Order } from "@/types/orders";
 import { toast } from "sonner";
-import { getCurrentUser } from "@/lib/auth-actions";
+import { getCurrentUser } from "@/lib/server-actions";
+
 
 export default function DeleteOrderPage() {
   
@@ -17,12 +18,12 @@ export default function DeleteOrderPage() {
   const [deleted, setDeleted] = useState<number | null>(null);
   const [orders,setOrders]=useState<Order[]>([]);
 
-
+  const Backend=process.env.NEXT_PUBLIC_API_URL
 
   async function handleLookup(e: FormEvent) {
-    e.preventDefault();
+    e.preventDefault();           
     setDeleted(null);
-    const res = await fetch(`http://localhost:3000/orders/${orderNumber}`);
+    const res = await fetch(`${Backend}/orders/${orderNumber}`);
 
     const data=await res.json();
 
@@ -45,7 +46,7 @@ export default function DeleteOrderPage() {
     const profile = await getCurrentUser()
     const id=profile.id
 
-    const res = await fetch(`http://localhost:3000/orders/user/${id}`);
+    const res = await fetch(`${Backend}/orders/user/${id}`);
 
     const data=await res.json();
 
@@ -59,7 +60,7 @@ export default function DeleteOrderPage() {
     if (!found) return;
 
     try {
-    const res = await fetch(`http://localhost:3000/orders/${found.id}`, {
+    const res = await fetch(`${Backend}/orders/${found.id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });

@@ -1,5 +1,5 @@
 import { Nav } from "@/components/nav"; // Adjust this import path as needed
-import { getCurrentUser } from "@/lib/auth-actions";
+import { getCurrentUser } from "@/lib/server-actions";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();

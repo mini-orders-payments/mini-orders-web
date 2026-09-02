@@ -3,8 +3,8 @@
 
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { signOutAction } from "@/lib/auth-actions";
-import type { CurrentUser } from "@/lib/auth-actions";
+import { signOutAction } from "@/lib/server-actions";
+import type { CurrentUser } from "@/lib/server-actions";
 
 function initials(name: string) {
   return name.split("  ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");

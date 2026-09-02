@@ -7,8 +7,10 @@ import { Field } from "@/components/field";
 import { Button } from "@/components/button";
 import { type Order } from "@/types/orders";
 import { toast } from "sonner";
-import { getCurrentUser } from "@/lib/auth-actions";
+import { getCurrentUser } from "@/lib/server-actions";
 
+
+const Backend=process.env.NEXT_PUBLIC_API_URL
 
 export default function CreateOrderPage() {
   const [userId, setUserId] = useState("");
@@ -47,7 +49,7 @@ async function getUser(){
     }
 
     try{
-        const res = await fetch('http://localhost:3000/orders/',{
+        const res = await fetch(`${Backend}/orders/`,{
                 method:'POST',
                 headers:{"content-Type":"application/json"},
                 body:JSON.stringify({userId:Number(id),amount})});

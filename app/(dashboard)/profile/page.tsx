@@ -1,7 +1,7 @@
 // app/profile/page.tsx
 import { redirect } from "next/navigation";
 import { CheckCircle2, XCircle, Clock, Layers, Mail, Phone, User as UserIcon } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth-actions";
+import { getCurrentUser } from "@/lib/server-actions";
 const STATS = [
   { key: "completed", label: "Completed", icon: CheckCircle2, color: "var(--accent)", soft: "var(--accent-soft)" },
   { key: "failed", label: "Failed", icon: XCircle, color: "var(--rust)", soft: "var(--rust-soft)" },

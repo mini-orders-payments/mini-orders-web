@@ -1,5 +1,5 @@
 "use client";
-import { signupAction,type AuthFormState } from '@/lib/auth-actions';
+import { signupAction,type AuthFormState } from '@/lib/server-actions';
 import { Field } from '@/components/field';
 import { useActionState } from 'react';
 import { Button } from '@/components/button';
