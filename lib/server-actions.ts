@@ -81,10 +81,28 @@ export async function signOutAction() {
 
 export async function getCurrentUser() {
   const token = (await cookies()).get('session')?.value;
-  const res = await fetch(`${process.env.NEST_API_URL}/auth/me`, {
+  const res = await fetch(`${API_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });
   if (!res.ok) return null;
   return res.json();
+}
+
+export async function getPaymentDetails(orderId: number) {
+  const token = (await cookies()).get('session')?.value;
+  
+  const res = await fetch(`${API_URL}/pay/order/${orderId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  
+  if (!res.ok) {
+    const errBody = await res.text();
+    console.error(`[Server Action] Backend returned status ${res.status}:`, errBody);
+    return null;
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+  
 }

@@ -2,12 +2,13 @@
 
 import { useState,useEffect ,Fragment} from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth-actions";
+import { getCurrentUser } from "@/lib/server-actions";
 import { Pencil, PackageOpen,ChevronDown,ChevronUp } from "lucide-react";
 import { type Order } from "@/types/orders"
 import { StatusBadge } from "@/components/statusBadge";
 import { EditOrderModal } from "@/components/editOrder";
 import { Button } from "@/components/button";
+import { getPaymentDetails } from "@/lib/server-actions";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -15,6 +16,8 @@ function formatDate(iso: string) {
     timeStyle: "short",
   });
 }
+
+const Backend=process.env.NEXT_PUBLIC_API_URL
 
 
 export default function OrdersPage() {
@@ -54,14 +57,11 @@ export default function OrdersPage() {
 
     if (!paymentDetails[orderId]) {
       try {
-        const res = await fetch(`http://localhost:3000/pay/order/${orderId}`);
-        if (!res.ok) return;
+        const data = await getPaymentDetails(orderId)  
 
-        const text = await res.text();
-        const data = text ? JSON.parse(text) : null;
         
         if (data){
-        console.log(`Payment data for Order ${orderId}:`, data);
+        
         
         setPaymentDetails((prev) => ({ ...prev, [orderId]: data }));
         }
@@ -76,7 +76,7 @@ export default function OrdersPage() {
       const profile = await getCurrentUser();
       const id=profile.id
       try{
-        const res = await fetch(`http://localhost:3000/orders/user/${id}`);
+        const res = await fetch(`${Backend}/orders/user/${id}`);
         const data= await res.json();
 
         if(Array.isArray(data)){

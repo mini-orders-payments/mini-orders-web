@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { NAV_LINKS } from "./navLinks";
-import { signOutAction } from "@/lib/auth-actions";
-import type { CurrentUser } from "@/lib/auth-actions";
+import { signOutAction } from "@/lib/server-actions";
+import type { CurrentUser } from "@/lib/server-actions";
 import { UserMenu } from "./userMenu";
 
 function isActive(pathname: string, href: string) {

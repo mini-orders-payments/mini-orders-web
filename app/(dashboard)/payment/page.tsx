@@ -7,7 +7,9 @@ import { Button } from "@/components/button";
 import { StatusBadge } from "@/components/statusBadge";
 import {  type Order } from "@/types/orders"
 import { toast } from "sonner";
-import { getCurrentUser } from "@/lib/auth-actions";
+import { getCurrentUser } from "@/lib/server-actions";
+
+const Backend=process.env.NEXT_PUBLIC_API_URL
 
 export default function PaymentPage() {
  
@@ -19,9 +21,6 @@ export default function PaymentPage() {
   const [paid, setPaid] = useState(false);
   const [phoneNumber,setPhoneNumber] =useState("");
   const [processing,setProcessing] = useState(false);
-  const backend =process.env.NEST_API_URL
-
-  console.log("Here is ",backend)
   
 
   async function handleLookup(e: FormEvent) {
@@ -56,7 +55,7 @@ export default function PaymentPage() {
     setError("");
 
     try {
-      const res = await fetch(`http://localhost:3000/pay/${found.id}`, {
+      const res = await fetch(`${Backend}/pay/${found.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body:JSON.stringify({phoneNumber:phoneNumber})
@@ -87,7 +86,7 @@ export default function PaymentPage() {
           }
 
       try {
-        const orderCheck = await fetch(`http://localhost:3000/orders/${found.id}`);
+        const orderCheck = await fetch(`${Backend}/orders/${found.id}`);
         const freshOrder = await orderCheck.json();
 
       if (freshOrder.status === "completed") {
@@ -126,7 +125,7 @@ export default function PaymentPage() {
         setprofile(currentProfile);
 
         //Format and set the phone number
-        const phone = currentProfile.phone;
+        const phone = currentProfile.phone || '';
         const formattedPhone = phone.trim().replace("+", "");
         if (formattedPhone.startsWith("0")) {
           setPhoneNumber(`254${formattedPhone.substring(1)}`);
@@ -135,7 +134,7 @@ export default function PaymentPage() {
         }
         
         
-        const res = await fetch(`http://localhost:3000/orders/user/${currentProfile.id}`);
+        const res = await fetch(`${Backend}/orders/user/${currentProfile.id}`);
         const data = await res.json();
   
         if (Array.isArray(data)) {
